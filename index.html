@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>UNPLUGGED – CSSS Open Mic | MIT Moradabad</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="icon" type="image/png" href="/logo.jpg">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Space+Mono:wght@400;700&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<style>
+  /* ===== CSS VARIABLES ===== */
+  :root {
+    --crimson: #8B0000;
+    --crimson-bright: #CC0000;
+    --gold: #FFD700;
+    --gold-dim: #B8860B;
+    --neon-yellow: #E8FF00;
+    --neon-glow: rgba(232,255,0,0.6);
+    --navy: #050A1A;
+    --deep-maroon: #1A0008;
+    --spotlight: rgba(255,240,180,0.15);
+    --white: #FFF8F0;
+    --gray: #8A8A9A;
+  }
+
+  /* ===== RESET ===== */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--navy);
+    color: var(--white);
+    font-family: 'Crimson Pro', Georgia, serif;
+    overflow-x: hidden;
+    touch-action: manipulation;
+    cursor: default;
+  }
+
+  /* ===== PARTICLES ===== */
+  #particles {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+  .particle {
+    position: absolute;
+    width: 2px; height: 2px;
+    background: rgba(255,240,180,0.6);
+    border-radius: 50%;
+    animation: floatParticle linear infinite;
+  }
+  @keyframes floatParticle {
+    0% { transform: translateY(100vh) translateX(0); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 0.5; }
+    100% { transform: translateY(-10vh) translateX(var(--drift)); opacity: 0; }
+  }
+
+  /* ===== CURTAIN ===== */
+  #curtain-container {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    pointer-events: none;
+  }
+  .curtain {
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      #3D0000 0%,
+      #700000 20%,
+      #8B0000 40%,
+      #A00000 55%,
+      #6B0000 75%,
+      #3D0000 100%
+    );
+    position: relative;
+    overflow: hidden;
+    transition: transform 1.8s cubic-bezier(0.77,0,0.18,1);
+  }
+  .curtain::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      90deg,
+      transparent 0px,
+      rgba(0,0,0,0.15) 8px,
+      transparent 16px,
+      rgba(255,255,255,0.04) 24px,
+      transparent 32px
+    );
+  }
+  .curtain::after {
+    content: '';
+    position: absolute;
+    top: 0; width: 20px; height: 100%;
+    background: linear-gradient(90deg, rgba(0,0,0,0.4), transparent);
+  }
+  .curtain-left::after { right: 0; }
+  .curtain-right { transform-origin: right; }
+  .curtain-right::after { left: 0; background: linear-gradient(90deg, transparent, rgba(0,0,0,0.4)); }
+
+  /* Curtain folds */
+  .curtain-folds {
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent,
+      transparent 40px,
+      rgba(0,0,0,0.05) 42px,
+      transparent 44px
+    );
+  }
+
+  #curtain-container.open .curtain-left {
+    transform: translateX(-100%);
+  }
+  #curtain-container.open .curtain-right {
+    transform: translateX(100%);
+  }
+
+  /* Gold trim */
+  .curtain-trim {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 12px;
+    background: linear-gradient(180deg,
+      var(--gold) 0%, var(--gold-dim) 30%,
+      var(--gold) 50%, var(--gold-dim) 70%,
+      var(--gold) 100%
+    );
+    box-shadow: 0 0 15px rgba(255,215,0,0.5);
+  }
+  .curtain-left .curtain-trim { right: 0; }
+  .curtain-right .curtain-trim { left: 0; }
+
+  /* ===== MAIN CONTENT ===== */
+  #main-content {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+    position: relative;
+    z-index: 1;
+  }
+  #main-content.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ===== SPOTLIGHT BG ===== */
+  .spotlight-bg {
+    position: absolute;
+    top: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    height: 800px;
+    background: conic-gradient(from 270deg at 50% 0%,
+      transparent 70deg,
+      rgba(255,240,150,0.12) 90deg,
+      rgba(255,240,150,0.18) 100deg,
+      rgba(255,240,150,0.12) 110deg,
+      transparent 130deg
+    );
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ===== HERO ===== */
+  #hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 80px 20px 60px;
+    position: relative;
+    background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(139,0,0,0.25) 0%, transparent 70%),
+                radial-gradient(ellipse 100% 100% at 50% 50%, var(--deep-maroon) 0%, var(--navy) 60%);
+  }
+
+  /* Stage floor */
+  #hero::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--gold), var(--gold-dim), var(--gold), transparent);
+    box-shadow: 0 0 20px rgba(255,215,0,0.4);
+  }
+
+  .org-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(0.55rem, 1.5vw, 0.7rem);
+    letter-spacing: 0.15em;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+    margin-bottom: 30px;
+    padding: 8px 20px;
+    border: 1px solid rgba(184,134,11,0.3);
+    border-radius: 2px;
+    background: rgba(0,0,0,0.3);
+    position: relative;
+    z-index: 2;
+  }
+
+  .hero-unplugged {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2.5rem, 10vw, 6rem);
+    letter-spacing: 0.3em;
+    color: var(--white);
+    line-height: 1;
+    position: relative;
+    z-index: 2;
+    text-shadow: 0 0 40px rgba(255,255,255,0.3);
+  }
+
+  .hero-csss {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(3.5rem, 18vw, 11rem);
+    color: var(--neon-yellow);
+    line-height: 0.85;
+    position: relative;
+    z-index: 2;
+    text-shadow:
+      0 0 20px var(--neon-glow),
+      0 0 40px var(--neon-glow),
+      0 0 80px rgba(232,255,0,0.3);
+    animation: titlePulse 3s ease-in-out infinite;
+  }
+
+  .hero-openmic {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(3rem, 16vw, 10rem);
+    color: var(--white);
+    line-height: 0.85;
+    position: relative;
+    z-index: 2;
+    letter-spacing: 0.05em;
+    text-shadow: 
+      0 0 60px rgba(255,255,255,0.2),
+      3px 3px 0 rgba(139,0,0,0.5);
+  }
+
+  @keyframes titlePulse {
+    0%, 100% { text-shadow: 0 0 20px var(--neon-glow), 0 0 40px var(--neon-glow), 0 0 80px rgba(232,255,0,0.3); }
+    50% { text-shadow: 0 0 30px var(--neon-glow), 0 0 60px var(--neon-glow), 0 0 120px rgba(232,255,0,0.4); }
+  }
+
+  .hero-tagline {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: clamp(1rem, 3vw, 1.5rem);
+    color: rgba(255,248,240,0.7);
+    margin: 20px 0 40px;
+    position: relative;
+    z-index: 2;
+    letter-spacing: 0.05em;
+  }
+
+  /* Mic icon */
+  .hero-mic {
+    font-size: 3rem;
+    margin-bottom: 15px;
+    position: relative;
+    z-index: 2;
+    animation: micFloat 2s ease-in-out infinite;
+    filter: drop-shadow(0 0 10px rgba(232,255,0,0.4));
+  }
+  @keyframes micFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  /* ===== CTA BUTTONS ===== */
+  .cta-group {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+    position: relative;
+    z-index: 2;
+  }
+
+  .btn {
+    display: inline-block;
+    padding: 16px 36px;
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(0.75rem, 2vw, 0.9rem);
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 200px;
+    text-align: center;
+  }
+
+  .btn-primary {
+    background: var(--neon-yellow);
+    color: #0A0A0A;
+    border: 2px solid var(--neon-yellow);
+    box-shadow: 0 0 20px rgba(232,255,0,0.3), 0 4px 15px rgba(0,0,0,0.4);
+  }
+  .btn-primary:hover {
+    background: transparent;
+    color: var(--neon-yellow);
+    box-shadow: 0 0 30px rgba(232,255,0,0.6), 0 4px 20px rgba(0,0,0,0.5);
+    transform: translateY(-3px);
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: #25D366;
+    border: 2px solid #25D366;
+    box-shadow: 0 0 20px rgba(37,211,102,0.2);
+  }
+  .btn-secondary:hover {
+    background: #25D366;
+    color: #0A0A0A;
+    box-shadow: 0 0 30px rgba(37,211,102,0.4);
+    transform: translateY(-3px);
+  }
+
+  /* ===== COUNTDOWN ===== */
+  #countdown-section {
+    padding: 60px 20px;
+    text-align: center;
+    position: relative;
+    background: linear-gradient(180deg, var(--navy) 0%, rgba(26,0,8,0.8) 50%, var(--navy) 100%);
+  }
+
+  .section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.3em;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+    margin-bottom: 30px;
+  }
+
+  .countdown-grid {
+    display: flex;
+    justify-content: center;
+    gap: clamp(10px, 3vw, 30px);
+    flex-wrap: wrap;
+  }
+
+  .countdown-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .countdown-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(3rem, 10vw, 6rem);
+    line-height: 1;
+    color: var(--neon-yellow);
+    background: rgba(0,0,0,0.5);
+    border: 1px solid rgba(232,255,0,0.3);
+    border-radius: 8px;
+    padding: 15px 25px;
+    min-width: clamp(80px, 18vw, 130px);
+    text-align: center;
+    box-shadow:
+      0 0 20px rgba(232,255,0,0.15),
+      inset 0 0 20px rgba(0,0,0,0.5);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s;
+  }
+
+  .countdown-num::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0; right: 0;
+    height: 1px;
+    background: rgba(232,255,0,0.1);
+  }
+
+  .countdown-label {
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(0.55rem, 1.5vw, 0.7rem);
+    letter-spacing: 0.2em;
+    color: var(--gray);
+    text-transform: uppercase;
+  }
+
+  .countdown-sep {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2rem, 7vw, 4rem);
+    color: rgba(232,255,0,0.3);
+    align-self: flex-start;
+    padding-top: 15px;
+    animation: blink 1s step-end infinite;
+  }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+  #event-started {
+    display: none;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2rem, 8vw, 4rem);
+    color: var(--neon-yellow);
+    text-shadow: 0 0 30px var(--neon-glow);
+    letter-spacing: 0.2em;
+  }
+
+  /* ===== SECTIONS COMMON ===== */
+  section {
+    padding: 70px 20px;
+    position: relative;
+  }
+
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2rem, 8vw, 4rem);
+    letter-spacing: 0.1em;
+    text-align: center;
+    margin-bottom: 8px;
+    color: var(--white);
+  }
+
+  .section-divider {
+    width: 80px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    margin: 0 auto 50px;
+  }
+
+  /* ===== EVENT DETAILS ===== */
+  #event-details {
+    background: radial-gradient(ellipse 80% 60% at 50% 50%, rgba(139,0,0,0.1) 0%, transparent 70%);
+  }
+
+  .details-card {
+    max-width: 600px;
+    margin: 0 auto;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,215,0,0.15);
+    border-radius: 12px;
+    padding: 40px;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  }
+
+  .details-card:hover {
+    border-color: rgba(255,215,0,0.35);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 40px rgba(255,215,0,0.08);
+    transform: translateY(-4px);
+  }
+
+  .detail-row {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 18px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .detail-row:last-child { border-bottom: none; }
+
+  .detail-icon {
+    font-size: 1.5rem;
+    width: 40px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .detail-info { flex: 1; }
+
+  .detail-key {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .detail-value {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1rem, 3vw, 1.3rem);
+    color: var(--white);
+  }
+
+  /* ===== CATEGORIES ===== */
+  #categories {
+    background: var(--navy);
+  }
+
+  .categories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .category-card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 36px 24px;
+    text-align: center;
+    cursor: default;
+    transition: all 0.35s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .category-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--card-glow);
+    opacity: 0;
+    transition: opacity 0.35s ease;
+    border-radius: 12px;
+  }
+  .category-card:hover::before { opacity: 1; }
+
+  .category-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    border-color: var(--card-color);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 30px var(--card-glow);
+  }
+
+  .category-card:nth-child(1) { --card-color: rgba(255,215,0,0.5); --card-glow: rgba(255,215,0,0.08); }
+  .category-card:nth-child(2) { --card-color: rgba(232,100,100,0.5); --card-glow: rgba(232,100,100,0.08); }
+  .category-card:nth-child(3) { --card-color: rgba(100,200,255,0.5); --card-glow: rgba(100,200,255,0.08); }
+  .category-card:nth-child(4) { --card-color: rgba(200,100,255,0.5); --card-glow: rgba(200,100,255,0.08); }
+
+  .category-emoji {
+    font-size: 2.8rem;
+    margin-bottom: 16px;
+    display: block;
+    transition: transform 0.3s ease;
+  }
+  .category-card:hover .category-emoji {
+    transform: scale(1.2) rotate(-5deg);
+  }
+
+  .category-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: 0.1em;
+    color: var(--white);
+  }
+
+  /* ===== TEAM ===== */
+  #team {
+    background: radial-gradient(ellipse 60% 80% at 50% 50%, rgba(26,0,8,0.8) 0%, transparent 70%),
+                var(--navy);
+  }
+
+  .team-grid {
+    max-width: 900px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 24px;
+  }
+
+  .team-card {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 28px;
+    transition: all 0.3s ease;
+  }
+  .team-card:hover {
+    border-color: rgba(255,215,0,0.2);
+    background: rgba(255,215,0,0.03);
+  }
+
+  .team-role {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255,215,0,0.2);
+  }
+
+  .team-names {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .team-names li {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .team-names li::before {
+    content: '◆';
+    font-size: 0.4rem;
+    color: var(--gold-dim);
+    flex-shrink: 0;
+  }
+
+  .year-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--gray);
+    margin-left: auto;
+    letter-spacing: 0.05em;
+  }
+
+  /* ===== FOOTER ===== */
+  footer {
+    background: rgba(0,0,0,0.5);
+    border-top: 1px solid rgba(255,215,0,0.1);
+    padding: 40px 20px;
+    text-align: center;
+  }
+
+  .footer-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.8rem;
+    color: var(--neon-yellow);
+    letter-spacing: 0.2em;
+    text-shadow: 0 0 15px var(--neon-glow);
+    margin-bottom: 12px;
+  }
+
+  .footer-sub {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    color: var(--gray);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .footer-line {
+    width: 60px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+    margin: 0 auto 20px;
+  }
+
+  .footer-copy {
+    font-family: 'Crimson Pro', serif;
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.3);
+  }
+
+  /* ===== SCROLL REVEAL ===== */
+  .reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .reveal-delay-1 { transition-delay: 0.1s; }
+  .reveal-delay-2 { transition-delay: 0.2s; }
+  .reveal-delay-3 { transition-delay: 0.3s; }
+  .reveal-delay-4 { transition-delay: 0.4s; }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 600px) {
+    .cta-group { flex-direction: column; align-items: stretch; }
+    .btn { min-width: auto; width: 100%; }
+    .details-card { padding: 24px 20px; }
+    .countdown-sep { display: none; }
+    .categories-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- PARTICLES -->
+<div id="particles"></div>
+
+<!-- CURTAINS -->
+<div id="curtain-container">
+  <div class="curtain curtain-left">
+    <div class="curtain-folds"></div>
+    <div class="curtain-trim"></div>
+  </div>
+  <div class="curtain curtain-right">
+    <div class="curtain-folds"></div>
+    <div class="curtain-trim"></div>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div id="main-content">
+
+  <!-- HERO -->
+  <section id="hero">
+    <div class="spotlight-bg"></div>
+    <div class="org-badge">Moradabad Institute of Technology &nbsp;·&nbsp; Dept. of Computer Science &amp; Engineering &nbsp;·&nbsp; CSSS</div>
+    <div class="hero-mic">🎤</div>
+    <div class="hero-unplugged">Unplugged</div>
+    <div class="hero-csss">CSSS</div>
+    <div class="hero-openmic">Open Mic</div>
+    <p class="hero-tagline">"Showcase your hidden talents and own the stage."</p>
+    <div class="cta-group">
+      <a href="https://forms.gle/ctuo1TsUFc8caZDR8" class="btn btn-primary" target="_blank" rel="noopener">Register Now</a>
+      <a href="https://chat.whatsapp.com/IAMTjSbULh20qAz5o2e8fJ?mode=gi_t" class="btn btn-secondary" target="_blank" rel="noopener">Join WhatsApp Group</a>
+    </div>
+  </section>
+
+  <!-- COUNTDOWN -->
+  <section id="countdown-section">
+    <div class="section-label">Event Begins In</div>
+    <div id="countdown-display" class="countdown-grid">
+      <div class="countdown-box">
+        <div class="countdown-num" id="cd-days">00</div>
+        <div class="countdown-label">Days</div>
+      </div>
+      <div class="countdown-sep">:</div>
+      <div class="countdown-box">
+        <div class="countdown-num" id="cd-hours">00</div>
+        <div class="countdown-label">Hours</div>
+      </div>
+      <div class="countdown-sep">:</div>
+      <div class="countdown-box">
+        <div class="countdown-num" id="cd-mins">00</div>
+        <div class="countdown-label">Minutes</div>
+      </div>
+      <div class="countdown-sep">:</div>
+      <div class="countdown-box">
+        <div class="countdown-num" id="cd-secs">00</div>
+        <div class="countdown-label">Seconds</div>
+      </div>
+    </div>
+    <div id="event-started">🎤 Event Has Started!</div>
+  </section>
+
+  <!-- EVENT DETAILS -->
+  <section id="event-details">
+    <div class="section-title reveal">Event Details</div>
+    <div class="section-divider reveal"></div>
+    <div class="details-card reveal">
+      <div class="detail-row">
+        <div class="detail-icon">📅</div>
+        <div class="detail-info">
+          <div class="detail-key">Date</div>
+          <div class="detail-value">25 February 2026</div>
+        </div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-icon">⏰</div>
+        <div class="detail-info">
+          <div class="detail-key">Time</div>
+          <div class="detail-value">2:00 PM onwards</div>
+        </div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-icon">📍</div>
+        <div class="detail-info">
+          <div class="detail-key">Venue</div>
+          <div class="detail-value">B-424 Seminar Hall</div>
+        </div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-icon">🏛️</div>
+        <div class="detail-info">
+          <div class="detail-key">Organized By</div>
+          <div class="detail-value">CSE Dept., MIT Moradabad</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CATEGORIES -->
+  <section id="categories">
+    <div class="section-title reveal">Performance Categories</div>
+    <div class="section-divider reveal"></div>
+    <div class="categories-grid">
+      <div class="category-card reveal reveal-delay-1">
+        <span class="category-emoji">🎤</span>
+        <div class="category-name">Singing</div>
+      </div>
+      <div class="category-card reveal reveal-delay-2">
+        <span class="category-emoji">📖</span>
+        <div class="category-name">Storytelling</div>
+      </div>
+      <div class="category-card reveal reveal-delay-3">
+        <span class="category-emoji">📝</span>
+        <div class="category-name">Poetry</div>
+      </div>
+      <div class="category-card reveal reveal-delay-4">
+        <span class="category-emoji">😂</span>
+        <div class="category-name">Stand-up Comedy</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TEAM -->
+  <section id="team">
+    <div class="section-title reveal">The Team</div>
+    <div class="section-divider reveal"></div>
+    <div class="team-grid">
+      <div class="team-card reveal">
+        <div class="team-role">Faculty Convener</div>
+        <ul class="team-names">
+          <li>Ms. Richa Saxena</li>
+        </ul>
+      </div>
+      <div class="team-card reveal reveal-delay-1">
+        <div class="team-role">Faculty Coordinators</div>
+        <ul class="team-names">
+          <li>Mr. Prabal Bhatnagar</li>
+          <li>Mr. Rohit Kumar Singh</li>
+          <li>Ms. Sakshi Singh</li>
+        </ul>
+      </div>
+      <div class="team-card reveal reveal-delay-2">
+        <div class="team-role">Student Coordinators</div>
+        <ul class="team-names">
+          <li>Radhika <span class="year-tag">3rd Year</span></li>
+          <li>Labhansh <span class="year-tag">2nd Year</span></li>
+          <li>Shagun <span class="year-tag">2nd Year</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-logo">CSSS Open Mic</div>
+    <div class="footer-sub">Unplugged · 25 Feb 2026 · B-424 Seminar Hall</div>
+    <div class="footer-line"></div>
+    <div class="footer-copy">Moradabad Institute of Technology &nbsp;|&nbsp; Dept. of Computer Science &amp; Engineering</div>
+  </footer>
+
+</div><!-- end main-content -->
+
+<script>
+  /* ===== PARTICLES ===== */
+  (function() {
+    const container = document.getElementById('particles');
+    const count = 50;
+    for (let i = 0; i < count; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      const size = Math.random() * 2 + 1;
+      const left = Math.random() * 100;
+      const duration = Math.random() * 15 + 8;
+      const delay = Math.random() * 15;
+      const drift = (Math.random() - 0.5) * 80;
+      p.style.cssText = `
+        left: ${left}%;
+        width: ${size}px;
+        height: ${size}px;
+        animation-duration: ${duration}s;
+        animation-delay: -${delay}s;
+        --drift: ${drift}px;
+        opacity: ${Math.random() * 0.5 + 0.2};
+      `;
+      container.appendChild(p);
+    }
+  })();
+
+  /* ===== CURTAIN OPEN ===== */
+  window.addEventListener('load', function() {
+    setTimeout(function() {
+      document.getElementById('curtain-container').classList.add('open');
+      setTimeout(function() {
+        document.getElementById('main-content').classList.add('visible');
+      }, 1000);
+    }, 300);
+  });
+
+  /* ===== COUNTDOWN ===== */
+  (function() {
+    const target = new Date('2026-02-25T14:00:00+05:30').getTime();
+    const display = document.getElementById('countdown-display');
+    const started = document.getElementById('event-started');
+    const pad = n => String(n).padStart(2, '0');
+
+    function update() {
+      const now = Date.now();
+      const diff = target - now;
+      if (diff <= 0) {
+        display.style.display = 'none';
+        started.style.display = 'block';
+        return;
+      }
+      const days = Math.floor(diff / 86400000);
+      const hours = Math.floor((diff % 86400000) / 3600000);
+      const mins = Math.floor((diff % 3600000) / 60000);
+      const secs = Math.floor((diff % 60000) / 1000);
+      document.getElementById('cd-days').textContent = pad(days);
+      document.getElementById('cd-hours').textContent = pad(hours);
+      document.getElementById('cd-mins').textContent = pad(mins);
+      document.getElementById('cd-secs').textContent = pad(secs);
+    }
+    update();
+    setInterval(update, 1000);
+  })();
+
+  /* ===== SCROLL REVEAL ===== */
+  (function() {
+    const observer = new IntersectionObserver(function(entries) {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  })();
+</script>
+
+</body>
+</html>
